@@ -107,7 +107,7 @@ void* SJFcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // TODO: uncomment when you implement this function
+    Process* p = NULL;
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
@@ -117,9 +117,7 @@ void* SJFcpu(void* param) {
                     // thread (or main inserting a new arrival) could touch it right now.
                     pthread_mutex_lock(&(svars->readyQLock));
 
-                    // Index 0 = head of the list = the process that has been waiting
-                    // the longest (qInsert always appends to the tail, so the head is
-                    // always the oldest arrival — that is the FIFO selection rule).
+                    // Index qShortest returns the process index with shortest burst remaining
                     p = qRemove(&(svars->readyQ), qShortest(&(svars->readyQ)));
 
                     if (p == NULL) {
@@ -160,7 +158,7 @@ void* NPPcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // TODO: uncomment when you implement this function
+    Process* p = NULL;
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
@@ -170,9 +168,7 @@ void* NPPcpu(void* param) {
                     // thread (or main inserting a new arrival) could touch it right now.
                     pthread_mutex_lock(&(svars->readyQLock));
 
-                    // Index 0 = head of the list = the process that has been waiting
-                    // the longest (qInsert always appends to the tail, so the head is
-                    // always the oldest arrival — that is the FIFO selection rule).
+                    // Index qPriority returns the process index with highest priority
                     p = qRemove(&(svars->readyQ), qPriority(&(svars->readyQ)));
 
                     if (p == NULL) {
@@ -214,7 +210,7 @@ void* RRcpu(void* param) {
     int Q = 0;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // TODO: uncomment when you implement this function
+    Process* p = NULL;  
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
@@ -224,9 +220,7 @@ void* RRcpu(void* param) {
                     // thread (or main inserting a new arrival) could touch it right now.
                     pthread_mutex_lock(&(svars->readyQLock));
 
-                    // Index 0 = head of the list = the process that has been waiting
-                    // the longest (qInsert always appends to the tail, so the head is
-                    // always the oldest arrival — that is the FIFO selection rule).
+                    // Index 0 = head of the list
                     p = qRemove(&(svars->readyQ), 0);
 
                     if (p == NULL) {
@@ -240,8 +234,9 @@ void* RRcpu(void* param) {
         
         if (p != NULL) {
             if (Q < svars->quantum){
-                Q++;
                 p->burstRemaining--;
+                Q++;
+
                 if (p->burstRemaining == 0 ) {
                     // Process is done — move it to finishedQ so main can
                     // compute and print wait-time statistics at simulation end.
@@ -256,11 +251,10 @@ void* RRcpu(void* param) {
                 }
             }
             else {
-                // Process quantum is done - move it back to readyQ
-                p->requeued = true;
-
+                // Process quantum is done - move p back to readyQ
                 pthread_mutex_lock(&(svars->readyQLock));
                 qInsert(&(svars->readyQ), p);
+                p->requeued = true;
 
                 // preempt and grab the next process on the queue
                 p = qRemove(&(svars->readyQ), 0);
@@ -268,24 +262,24 @@ void* RRcpu(void* param) {
 
                 // Set quantum counter back to 0
                 Q = 0;
+                printf("Scheduling PID %d\n", p->PID);
 
-                if (p != NULL){
-                    printf("Scheduling PID %d\n", p->PID);
-                    Q++;
-                    p->burstRemaining--;
-                    if (p->burstRemaining == 0 ) {
-                        // Process is done — move it to finishedQ so main can
-                        // compute and print wait-time statistics at simulation end.
-                        pthread_mutex_lock(&(svars->finishedQLock));
-                        qInsert(&(svars->finishedQ), p);
-                        pthread_mutex_unlock(&(svars->finishedQLock));
+                p->burstRemaining--;
+                Q++;
 
-                        // Set quantum counter back to 0 for next process
-                        Q = 0;
-                        // CPU is now idle; it will select a new process next tick.
-                        p = NULL;
-                    }
+                if (p->burstRemaining == 0 ) {
+                    // Process is done — move it to finishedQ so main can
+                    // compute and print wait-time statistics at simulation end.
+                    pthread_mutex_lock(&(svars->finishedQLock));
+                    qInsert(&(svars->finishedQ), p);
+                    pthread_mutex_unlock(&(svars->finishedQLock));
+
+                    // Set quantum counter back to 0 for next process
+                    Q = 0;
+                    // CPU is now idle; it will select a new process next tick.
+                    p = NULL;
                 }
+
             }
         }
         sem_post(svars->mainSem);
@@ -301,7 +295,7 @@ void* SRTFcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // TODO: uncomment when you implement this function
+    Process* p = NULL;
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
@@ -311,6 +305,7 @@ void* SRTFcpu(void* param) {
                     // thread (or main inserting a new arrival) could touch it right now.
                     pthread_mutex_lock(&(svars->readyQLock));
 
+                    // Index qShortest returns the process index with shortest burst remaining
                     p = qRemove(&(svars->readyQ), qShortest(&(svars->readyQ)));
 
                     if (p == NULL) {
@@ -332,7 +327,6 @@ void* SRTFcpu(void* param) {
                 p = qRemove(&(svars->readyQ), qShortest(&(svars->readyQ)));
                 pthread_mutex_unlock(&(svars->readyQLock));
                 printf("Scheduling PID %d\n", p->PID);
-
             }
             
             p->burstRemaining--;
@@ -361,7 +355,7 @@ void* PPcpu(void* param) {
     int threadNum = ((CpuParams*) param)->threadNumber;
     SharedVars* svars = ((CpuParams*) param)->svars;
 
-    Process* p = NULL;  // TODO: uncomment when you implement this function
+    Process* p = NULL;
 
     while (1) {
         sem_wait(svars->cpuSems[threadNum]);
@@ -370,6 +364,7 @@ void* PPcpu(void* param) {
                     // thread (or main inserting a new arrival) could touch it right now.
                     pthread_mutex_lock(&(svars->readyQLock));
 
+                    // Index qPriority returns the process index with highest priority
                     p = qRemove(&(svars->readyQ), qPriority(&(svars->readyQ)));
 
                     if (p == NULL) {
@@ -404,9 +399,9 @@ void* PPcpu(void* param) {
 
                 // CPU is now idle; it will select a new process next tick.
                 p = NULL;
-            }
-                
-            }
+            }        
+        }
+
         sem_post(svars->mainSem);
     }
 }
