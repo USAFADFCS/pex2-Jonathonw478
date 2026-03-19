@@ -14,7 +14,8 @@
  *          All accesses to readyQ and finishedQ are protected by their
  *          respective mutex locks.
  * ===========================================================
- * Documentation Statement: <describe any help received>
+ * Documentation Statement: I talked out my thought process with Noah, more of a rubber duck conversation where we were speaking out loud rather than helping each other code.
+ * All work submitted our own, we did not provide code to one another.
  * =========================================================== */
 
 #include <stdio.h>
