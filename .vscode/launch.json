@@ -8,7 +8,7 @@
             "name": "gdb - Windows+WSL/Ubuntu",
             "type": "cppdbg",
             "request": "launch",
-            "program": "pex2",
+            "program": "${workspaceFolder}/pex2",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
