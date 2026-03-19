@@ -128,7 +128,7 @@ void* SJFcpu(void* param) {
                     }
 
                     pthread_mutex_unlock(&(svars->readyQLock));
-                }
+        }
         
         if (p != NULL) {
             p->burstRemaining--;
@@ -179,7 +179,7 @@ void* NPPcpu(void* param) {
                     }
 
                     pthread_mutex_unlock(&(svars->readyQLock));
-                }
+        }
         
         if (p != NULL) {
             p->burstRemaining--;
@@ -230,7 +230,7 @@ void* RRcpu(void* param) {
                         printf("Scheduling PID %d\n", p->PID);
                     }
                     pthread_mutex_unlock(&(svars->readyQLock));
-                }
+        }
         
         if (p != NULL) {
             if (Q < svars->quantum){
@@ -279,7 +279,6 @@ void* RRcpu(void* param) {
                     // CPU is now idle; it will select a new process next tick.
                     p = NULL;
                 }
-
             }
         }
         sem_post(svars->mainSem);
@@ -341,7 +340,7 @@ void* SRTFcpu(void* param) {
                 p = NULL;
             }
                 
-            }
+        }
         sem_post(svars->mainSem);
     }
 }
