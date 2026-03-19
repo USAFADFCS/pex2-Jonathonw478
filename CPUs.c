@@ -318,16 +318,16 @@ void* SRTFcpu(void* param) {
         }
         
         if (p != NULL) {
+            pthread_mutex_lock(&(svars->readyQLock));
             if (qShortestBR(&(svars->readyQ)) < p->burstRemaining) {
-                pthread_mutex_lock(&(svars->readyQLock));
                 p->requeued = true;
                 qInsert(&(svars->readyQ), p);
 
                 // preempt and grab the next process on the queue
                 p = qRemove(&(svars->readyQ), qShortest(&(svars->readyQ)));
-                pthread_mutex_unlock(&(svars->readyQLock));
                 printf("Scheduling PID %d\n", p->PID);
             }
+            pthread_mutex_unlock(&(svars->readyQLock));
             
             p->burstRemaining--;
             if (p->burstRemaining == 0 ) {
@@ -377,17 +377,16 @@ void* PPcpu(void* param) {
         }
         
         if (p != NULL) {
+            pthread_mutex_lock(&(svars->readyQLock));
             if (qGetPriority(&(svars->readyQ)) < p->priority) {
-                pthread_mutex_lock(&(svars->readyQLock));
-
                 qInsert(&(svars->readyQ), p);
                 p->requeued = true;
 
                 // preempt and grab the next process on the queue
                 p = qRemove(&(svars->readyQ), qPriority(&(svars->readyQ)));
-                pthread_mutex_unlock(&(svars->readyQLock));
                 printf("Scheduling PID %d\n", p->PID);
             }
+            pthread_mutex_unlock(&(svars->readyQLock));
             
             p->burstRemaining--;
             if (p->burstRemaining == 0 ) {
